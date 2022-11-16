@@ -1,0 +1,26 @@
+name: Build
+run-name: starfive visionfive linux kernel dpkg
+on: [push, workflow_dispatch]
+jobs:
+  Build-kernel:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checking out
+        uses: actions/checkout@v3
+      - name: Installing dependencies
+        run: sudo apt-get install -y libncurses-dev libssl-dev bc flex bison make gcc gcc-riscv64-linux-gnu
+      - name: Configuring
+        run: make -j8 ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- visionfive_defconfig
+      - name: Building
+        run: make -j8 ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- -j$(nproc) bindeb-pkg LOCALVERSION=-starfive
+      - name: Done
+        run: |
+          mv ../*.deb .
+          ls ${{ github.workspace }}
+          echo "Status ${{ job.status }}."
+      - name: linux-visionfive-starfive_riscv64-dpkg
+        uses: actions/upload-artifact@v3.1.1
+        with:
+          name: kernel package
+          path: |
+            *.deb
